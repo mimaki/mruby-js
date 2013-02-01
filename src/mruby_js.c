@@ -265,6 +265,67 @@ mrb_js_get(mrb_state* mrb, mrb_value self)
   return ret;
 }
 
+mrb_value
+mrb_js_funcall_argv(mrb_state *mrb, const char *func, int argc, mrb_value *argv)
+{
+  mrb_value mjs, jso, r;
+
+//printf("mrb_js_funcall_argv() start.\n");
+  mjs = mrb_const_get(mrb, mrb_obj_value(mrb->object_class), mrb_intern(mrb, "MrubyJs"));
+
+  jso = mrb_js_get_root_object(mrb, mjs);
+//printf("JsObject: ");
+//mrb_p(mrb, jso);
+
+  js_call(mrb, mruby_js_get_object_handle_value(mrb, jso),
+          func, argv, argc, &r, 0);
+
+//printf("mrb_js_funcall_argv() end.\n");
+
+  return r;
+}
+
+#ifndef MRB_FUNCALL_ARGC_MAX
+#define MRB_FUNCALL_ARGC_MAX 16
+#endif
+
+mrb_value
+mrb_js_funcall(mrb_state *mrb, const char *func, int argc, ...)
+{
+  va_list ap;
+  int i;
+  mrb_value r;
+
+printf("mrb_js_funcall() start.\n");
+  if (argc == 0) {
+    r = mrb_js_funcall_argv(mrb, func, 0, 0);
+  }
+  else if (argc == 1) {
+    mrb_value v;
+
+    va_start(ap, argc);
+    v = va_arg(ap, mrb_value);
+    va_end(ap);
+    r = mrb_js_funcall_argv(mrb, func, 1, &v);
+  }
+  else {
+    mrb_value argv[MRB_FUNCALL_ARGC_MAX];
+
+    if (argc > MRB_FUNCALL_ARGC_MAX) {
+      mrb_raisef(mrb, E_ARGUMENT_ERROR, "Too long arguments. (limit=%d)", MRB_FUNCALL_ARGC_MAX);
+    }
+
+    va_start(ap, argc);
+    for (i = 0; i < argc; i++) {
+      argv[i] = va_arg(ap, mrb_value);
+    }
+    va_end(ap);
+    r = mrb_js_funcall_argv(mrb, func, argc, argv);
+  }
+printf("mrb_js_funcall() end.\n");
+  return r;
+}
+
 void
 mrb_mruby_js_gem_init(mrb_state* mrb) {
   mjs_mod = mrb_define_module(mrb, "MrubyJs");
