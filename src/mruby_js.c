@@ -509,6 +509,27 @@ printf("mrb_js_funcall() end.\n");
   return r;
 }
 
+mrb_value
+mrb_js_funcall_argv(mrb_state *mrb, const char *func, int argc, mrb_value *argv)
+{
+  mrb_value mjs, jso, r;
+
+//printf("mrb_js_funcall_argv() start.\n");
+  mjs = mrb_const_get(mrb, mrb_obj_value(mrb->object_class), mrb_intern(mrb, "MrubyJs"));
+
+  jso = mrb_js_get_root_object(mrb, mjs);
+//printf("JsObject: ");
+//mrb_p(mrb, jso);
+
+  // js_call(mrb, mruby_js_get_object_handle_value(mrb, jso),
+  //         func, argv, argc, &r, 0);
+  r = mrb_funcall_argv(mrb, jso, mrb_intern(mrb, func), argc, argv);
+
+//printf("mrb_js_funcall_argv() end.\n");
+
+  return r;
+}
+
 void
 mrb_mruby_js_gem_init(mrb_state *mrb) {
   mjs_mod = mrb_define_module(mrb, "MrubyJs");
