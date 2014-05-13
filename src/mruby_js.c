@@ -61,7 +61,7 @@ mruby_js_get_object_handle_value(mrb_state *mrb, mrb_value js_obj)
   mrb_value value_handle;
   mrb_int *handle_p = NULL;
 
-  value_handle = mrb_iv_get(mrb, js_obj, mrb_intern(mrb, "handle"));
+  value_handle = mrb_iv_get(mrb, js_obj, mrb_intern_lit(mrb, "handle"));
   Data_Get_Struct(mrb, value_handle, &mruby_js_object_handle_type, handle_p);
   if (handle_p == NULL) {
     mrb_raise(mrb, E_ARGUMENT_ERROR, "Cannot get handle value!");
@@ -159,7 +159,7 @@ struct RProc* mruby_js_get_proc(mrb_state *mrb, mrb_value *argv, int idx)
 
   /* save proc in a global array to avoid GC */
   mrb_funcall_argv(mrb, mrb_obj_value(mjs_mod),
-                   mrb_intern(mrb, "add_proc"),
+                   mrb_intern_lit(mrb, "add_proc"),
                    1, &argv[idx]);
 
   return mrb_proc_ptr(argv[idx]);
@@ -173,7 +173,7 @@ mrb_int mruby_js_get_array_handle(mrb_state *mrb, mrb_value *argv, int idx)
     mrb_raise(mrb, E_ARGUMENT_ERROR, "Given argument is not an array!");
   }
 
-  js_array = mrb_funcall_argv(mrb, argv[idx], mrb_intern(mrb, "toJsArray"),
+  js_array = mrb_funcall_argv(mrb, argv[idx], mrb_intern_lit(mrb, "toJsArray"),
                               0, NULL);
 
   return mruby_js_get_object_handle(mrb, &js_array, 0);
@@ -187,7 +187,7 @@ mrb_int mruby_js_get_hash_handle(mrb_state *mrb, mrb_value *argv, int idx)
     mrb_raise(mrb, E_ARGUMENT_ERROR, "Given argument is not a hash!");
   }
 
-  js_object = mrb_funcall_argv(mrb, argv[idx], mrb_intern(mrb, "toJsObject"),
+  js_object = mrb_funcall_argv(mrb, argv[idx], mrb_intern_lit(mrb, "toJsObject"),
                                0, NULL);
 
   return mruby_js_get_object_handle(mrb, &js_object, 0);
@@ -201,7 +201,7 @@ void mruby_js_convert_symbol_to_string(mrb_state *mrb, mrb_value *argv, int idx)
     mrb_raise(mrb, E_ARGUMENT_ERROR, "Given argument is not a symbol!");
   }
 
-  str = mrb_funcall_argv(mrb, argv[idx], mrb_intern(mrb, "to_s"),
+  str = mrb_funcall_argv(mrb, argv[idx], mrb_intern_lit(mrb, "to_s"),
                          0, NULL);
   if (mrb_type(str) != MRB_TT_STRING) {
     mrb_raise(mrb, E_ARGUMENT_ERROR, "Failed to convert symbol to string!");
@@ -239,7 +239,7 @@ void mruby_js_invoke_proc(mrb_state *mrb, struct RProc *proc,
 
   /* Only for statistics and GC purpose */
   mrb_funcall_argv(mrb, mrb_obj_value(mjs_mod),
-                   mrb_intern(mrb, "call_proc"),
+                   mrb_intern_lit(mrb, "call_proc"),
                    1, &p);
 }
 
@@ -283,7 +283,7 @@ void mruby_js_set_object_handle(mrb_state *mrb, mrb_value *arg, mrb_int handle)
   o = (struct RObject*)mrb_obj_alloc(mrb, ttype, js_obj_cls);
   *arg = mrb_obj_value(o);
   argv = mrb_fixnum_value(handle);
-  mrb_funcall_argv(mrb, *arg, mrb->init_sym, 1, &argv);
+  mrb_funcall_argv(mrb, *arg, mrb_intern_lit(mrb, "initialize"), 1, &argv);
 }
 
 void mruby_js_set_array_handle(mrb_state *mrb, mrb_value *arg, mrb_int handle)
@@ -296,7 +296,7 @@ void mruby_js_set_array_handle(mrb_state *mrb, mrb_value *arg, mrb_int handle)
   o = (struct RObject*)mrb_obj_alloc(mrb, ttype, js_array_cls);
   *arg = mrb_obj_value(o);
   argv = mrb_fixnum_value(handle);
-  mrb_funcall_argv(mrb, *arg, mrb->init_sym, 1, &argv);
+  mrb_funcall_argv(mrb, *arg, mrb_intern_lit(mrb, "initialize"), 1, &argv);
 }
 
 void mruby_js_set_function_handle(mrb_state *mrb, mrb_value *arg,
@@ -317,7 +317,7 @@ void mruby_js_set_function_handle(mrb_state *mrb, mrb_value *arg,
     argv[1] = mrb_nil_value();
   }
 
-  mrb_funcall_argv(mrb, *arg, mrb->init_sym, 2, argv);
+  mrb_funcall_argv(mrb, *arg, mrb_intern_lit(mrb, "initialize"), 2, argv);
 }
 
 /* mrb functions */
@@ -325,7 +325,7 @@ void mruby_js_set_function_handle(mrb_state *mrb, mrb_value *arg,
 static mrb_value
 mrb_js_get_root_object(mrb_state *mrb, mrb_value mod)
 {
-  mrb_sym root_sym = mrb_intern(mrb, "ROOT_OBJECT");
+  mrb_sym root_sym = mrb_intern_lit(mrb, "ROOT_OBJECT");
   mrb_value ret = mrb_iv_get(mrb, mod, root_sym);
   if (!mrb_nil_p(ret)) {
     return ret;
@@ -356,7 +356,7 @@ mrb_js_obj_initialize(mrb_state *mrb, mrb_value self)
     mrb_raise(mrb, E_RUNTIME_ERROR, "Cannot allocate memory!");
   }
   *handle_p = handle;
-  mrb_iv_set(mrb, self, mrb_intern(mrb, "handle"), mrb_obj_value(
+  mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "handle"), mrb_obj_value(
       Data_Wrap_Struct(mrb, mrb->object_class,
                        &mruby_js_object_handle_type, (void*) handle_p)));
 
@@ -429,7 +429,7 @@ mrb_js_func_invoke_internal(mrb_state *mrb, mrb_value func)
     argc--;
   } else {
     /* this object is parent object by default */
-     this_value = mrb_funcall_argv(mrb, func, mrb_intern(mrb, "parent_object"),
+     this_value = mrb_funcall_argv(mrb, func, mrb_intern_lit(mrb, "parent_object"),
                                    0, NULL);
   }
 
@@ -454,7 +454,7 @@ mrb_js_funcall_argv(mrb_state *mrb, const char *func, int argc, mrb_value *argv)
   mrb_value mjs, jso, r;
 
 //printf("mrb_js_funcall_argv() start.\n");
-  mjs = mrb_const_get(mrb, mrb_obj_value(mrb->object_class), mrb_intern(mrb, "MrubyJs"));
+  mjs = mrb_const_get(mrb, mrb_obj_value(mrb->object_class), mrb_intern_lit(mrb, "MrubyJs"));
 
   jso = mrb_js_get_root_object(mrb, mjs);
 //printf("JsObject: ");
@@ -462,7 +462,7 @@ mrb_js_funcall_argv(mrb_state *mrb, const char *func, int argc, mrb_value *argv)
 
   // js_call(mrb, mruby_js_get_object_handle_value(mrb, jso),
   //         func, argv, argc, &r, 0);
-  r = mrb_funcall_argv(mrb, jso, mrb_intern(mrb, func), argc, argv);
+  r = mrb_funcall_argv(mrb, jso, mrb_intern_lit(mrb, func), argc, argv);
 
 //printf("mrb_js_funcall_argv() end.\n");
 
