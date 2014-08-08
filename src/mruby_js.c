@@ -462,7 +462,7 @@ mrb_js_funcall_argv(mrb_state *mrb, const char *func, int argc, mrb_value *argv)
 
   // js_call(mrb, mruby_js_get_object_handle_value(mrb, jso),
   //         func, argv, argc, &r, 0);
-  r = mrb_funcall_argv(mrb, jso, mrb_intern_lit(mrb, func), argc, argv);
+  r = mrb_funcall_argv(mrb, jso, mrb_intern_cstr(mrb, func), argc, argv);
 
 //printf("mrb_js_funcall_argv() end.\n");
 
